@@ -71,9 +71,9 @@ def rot(x1, y1, x2, y2, w1, z1, w2, z2, w0, z0):
     if theta1 == 0 and theta2 == 0:
         x1pi = (w1-w0)*math.cos(math.pi)+(z1-z0)*math.sin(math.pi)
         y1pi = -(w1-w0)*math.sin(math.pi)+(z1-z0)*math.cos(math.pi)
-        if x1pi == x1 and y1pi == y1:
-            theta1 = 180
-            theta2 = 180
+        if round(x1pi,4) == round(x1,4) and round(y1pi,4) == round(y1,4):
+            theta1 = math.pi
+            theta2 = math.pi
         else:
             theta1 = 0
             theta2 = 0
@@ -85,13 +85,16 @@ def rot(x1, y1, x2, y2, w1, z1, w2, z2, w0, z0):
 
 def unknown_frame(x1, y1, x2, y2, w1, z1, w2, z2):
 	unknown_cand = unknown_frame_calc(x1, y1, x2, y2, w1, z1, w2, z2)
+	print(unknown_cand)
 	rot1 = rot(x1, y1, x2, y2, w1, z1, w2, z2, unknown_cand[0], unknown_cand[1])
+	print(rot1)
 	rot2 = rot(x1, y1, x2, y2, w1, z1, w2, z2, unknown_cand[2], unknown_cand[3])
+	print(rot2)
 
 	if round(rot1[0],4) == round(rot1[1],4):
 		unknown_frame = {"w0" : unknown_cand[0], "z0" : unknown_cand[1], "theta" : rot1[0]}
 		print(unknown_frame)
-	elif round(rot1[2],4) == round(rot1[3],4):
+	elif round(rot2[0],4) == round(rot2[1],4):
 		unknown_frame = {"w0" : unknown_cand[2], "z0" : unknown_cand[3], "theta" : rot2[0]}
 		print(unknown_frame)
 	else:
