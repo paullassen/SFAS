@@ -1,3 +1,4 @@
+from __future__ import division
 # Coordinate systems: (x,y) Robot origin/odometry
 					# (w,z) Unknown reference frame 
 
@@ -85,18 +86,18 @@ def rot(x1, y1, x2, y2, w1, z1, w2, z2, w0, z0):
 
 def unknown_frame(x1, y1, x2, y2, w1, z1, w2, z2):
 	unknown_cand = unknown_frame_calc(x1, y1, x2, y2, w1, z1, w2, z2)
-	print(unknown_cand)
+	#print(unknown_cand)
 	rot1 = rot(x1, y1, x2, y2, w1, z1, w2, z2, unknown_cand[0], unknown_cand[1])
-	print(rot1)
+	#print(rot1)
 	rot2 = rot(x1, y1, x2, y2, w1, z1, w2, z2, unknown_cand[2], unknown_cand[3])
-	print(rot2)
+	#print(rot2)
 
 	if round(rot1[0],4) == round(rot1[1],4):
-		unknown_frame = {"w0" : unknown_cand[0], "z0" : unknown_cand[1], "theta" : rot1[0]}
-		print(unknown_frame)
+		unknown_frame = [unknown_cand[0], unknown_cand[1], rot1[0]]
+		#print(unknown_frame)
 	elif round(rot2[0],4) == round(rot2[1],4):
-		unknown_frame = {"w0" : unknown_cand[2], "z0" : unknown_cand[3], "theta" : rot2[0]}
-		print(unknown_frame)
+		unknown_frame = [ unknown_cand[2],  unknown_cand[3], rot2[0]]
+		#print(unknown_frame)
 	else:
 		print ("Whoops! You fucked up somewhere!")
 #####################################################################################################################
