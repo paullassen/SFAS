@@ -17,6 +17,7 @@ class qr_store:
 		self.num = num
 		self.letter = letter
 		self.robot = []
+
 class Wasp:
 	def __init__(self):
 		self.coords= [0.0,0.0]
@@ -30,7 +31,8 @@ class Wasp:
 		self.nums = []
 		self.frame_origin = []
 		self.max_cov = 1
-
+		self.flaggs = 0
+		self.done = False
 	def update_pos(self,msg):
 		pos = msg.pose.pose.position
 		cov = msg.pose.covariance
@@ -65,9 +67,11 @@ class Wasp:
 			self.update_odom(msg)
 		elif var == 4:
 			self.add_qr(msg)
+		elif var == 5:
+			self.flagging(msg)
 
 	def add_qr(self, msg):
-		if msg.data not in self.msg and self.flag > 0 and msg.data != '' and self.max_cov < 3e-04:
+		if msg.data not in self.msg and self.flag > 0 and msg.data != '' and self.max_cov < 3e-04 and self.flaggs == 1: 
 			self.msg.append(msg.data)
 			self.handle_message(msg.data, (self.qr_coords[0], self.qr_coords[1]))
 			self.flag = 0
@@ -77,7 +81,8 @@ class Wasp:
 					tmp.append(self.qr_store[num].world_loc)
 					tmp.append(self.qr_store[num].frame_loc)
 				self.frame_origin = unknown_frame(tmp[1][0], tmp[1][1], tmp[3][0], tmp[3][1], tmp[0][0], tmp[0][1], tmp[2][0], tmp[2][1])
-				self.frame_origin[0][1] = -self.frame_origin[0][1]
+				#self.frame_origin[0][1] = -self.frame_origin[0][1]
+	
 	def print_coords(self):
 		for num in self.nums:
 			print self.qr_store[num].robot
@@ -88,7 +93,15 @@ class Wasp:
 			print self.frame_origin
 			print "----------"
 		print self.max_cov 
-		
+
+	def print_message(self):
+		msg = 'Message: '
+		for qrs in self.qr_store:
+			msg = msg + qrs.letter
+		print msg
+
+	def flagging(self, msg):
+		self.flaggs= msg.data		
 	def handle_message(self, data, known_loc):
 		inf=data.split("\r\n")
 		unknown_loc = (float(inf[0][2:]),  float(inf[1][2:]))
@@ -116,11 +129,32 @@ class Wasp:
 			pub.position.x = -10
 			pub.position.y = -10
 			pub.position.z = -10
+		elif len(self.nums)>=5:
+			pub.position.x = 10
+			pub.position.y = 10
+			pub.position.z = 10
+			self.done = True
 		else:
 			nxt = self.next_loc()
 			pub.position.x = nxt[0]
 			pub.position.y = nxt[1]
-			pub.orientation.x = nxt[2]
+
+			if pub.position.x > 3.5:
+				pub.position.x = 3.5
+			elif pub.position.x < 0.0:
+				pub.position.x = 0.0
+			
+			if pub.position.y > 3.3:
+				pub.position.y = 3.3
+			elif pub.position.y < -2.2:
+				pub.position.y = -2.2
+
+			eul = (0.0,0.0,math.atan2(nxt[1]-1, nxt[0]-2))
+			quat = tft.quaternion_from_euler(0.0,0.0, math.atan2(nxt[1],nxt[0]))
+			pub.orientation.x = quat[0]
+			pub.orientation.y = quat[1]
+			pub.orientation.z = quat[2]
+			pub.orientation.w = quat[3]
 		publisher.publish(pub)
 def visp_callback(msg, callback_arg):
 	some_code = msg
@@ -136,13 +170,15 @@ if __name__ == '__main__':
 	status_var = 2
 	tf_var = 3
 	message_var = 4
-	
+	twist_var = 5	
+
 	rate = rospy.Rate(3)	
 	rospy.Subscriber("visp_auto_tracker/object_position_covariance",geo.PoseWithCovarianceStamped,visp_callback, (wsp, pos_var))
 	rospy.Subscriber("visp_auto_tracker/status",stm.Int8,visp_callback, (wsp, status_var))
 	rospy.Subscriber("visp_auto_tracker/code_message",stm.String,visp_callback, (wsp, message_var))
 	rospy.Subscriber("amcl_pose",geo.PoseWithCovarianceStamped, visp_callback, (wsp, tf_var))
-
-	while not rospy.is_shutdown():
+	rospy.Subscriber("/flags_for_days", stm.Int8, visp_callback, (wsp, twist_var))
+	while not rospy.is_shutdown() and not wsp.done:
 		wsp.pub_loc(pub)
 		rate.sleep()
+	wsp.print_message()
