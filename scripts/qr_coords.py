@@ -84,15 +84,16 @@ class Wasp:
 				#self.frame_origin[0][1] = -self.frame_origin[0][1]
 	
 	def print_coords(self):
+                msg = ''
 		for num in self.nums:
-			print self.qr_store[num].robot
+			msg = msg+ self.qr_store[num].letter
 			print self.qr_store[num].world_loc
 			print self.qr_store[num].frame_loc
 			print "==========="
 		if len(self.nums) >= 2:
 			print self.frame_origin
 			print "----------"
-		print self.max_cov 
+		print msg
 
 	def print_message(self):
 		msg = 'Message: '
@@ -146,8 +147,8 @@ class Wasp:
 			
 			if pub.position.y > 3.3:
 				pub.position.y = 3.3
-			elif pub.position.y < -2.2:
-				pub.position.y = -2.2
+			elif pub.position.y < -2.0:
+				pub.position.y = -2.0
 
 			eul = (0.0,0.0,math.atan2(nxt[1]-1, nxt[0]-2))
 			quat = tft.quaternion_from_euler(0.0,0.0, math.atan2(nxt[1],nxt[0]))
